@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -60,7 +59,7 @@ typedef Future<dynamic> OnStartCall(String handle, bool video);
 
 enum HandleType { phoneNumber, generic, email }
 
-enum EndReason { failed, remoteEnded, unanswered,  }
+enum EndReason { failed, remoteEnded, unanswered }
 
 class IOSOptions {
   ///  It will be displayed on system UI when incoming calls received
@@ -154,9 +153,6 @@ class FlutterCallKit {
     OnHold didToggleHoldAction,
     OnStartCall handleStartCallNotification,
   }) {
-    if (!Platform.isIOS) {
-      return;
-    }
     _didReceiveStartCallAction = didReceiveStartCallAction;
     _onProviderReset = onProviderReset;
     _performAnswerCallAction = performAnswerCallAction;
@@ -173,6 +169,8 @@ class FlutterCallKit {
   }
 
   Future<dynamic> _handleMethod(MethodCall call) async {
+    print("[FlutterVOIP][_handle menthod]::::::::: $call");
+
     switch (call.method) {
       case "didReceiveStartCallAction":
         if (_didReceiveStartCallAction == null) {
@@ -185,12 +183,12 @@ class FlutterCallKit {
           return null;
         }
         return _onProviderReset();
-      case "performAnswerCallAction":
+      case "onPerformAnswerCallAction":
         if (_performAnswerCallAction == null) {
           return null;
         }
-        return _performAnswerCallAction(
-            call.arguments.cast<String, dynamic>()["callUUID"]);
+
+        return _performAnswerCallAction(call.arguments.cast<String, dynamic>()["callUUID"]);
       case "performEndCallAction":
         if (_performEndCallAction == null) {
           return null;
@@ -209,7 +207,7 @@ class FlutterCallKit {
         return _didDeactivateAudioSession();
       case "didDisplayIncomingCall":
         if (_didDisplayIncomingCall == null) {
-          print("_didDisplayIncomingCall is null");
+          print("[FlutterVOIP][config] khong co _didDisplayIncomingCall");
           return null;
         }
         Map map = call.arguments.cast<String, dynamic>();
@@ -254,9 +252,6 @@ class FlutterCallKit {
       String uuid, String handle, String localizedCallerName,
       {HandleType handleType = HandleType.phoneNumber,
       bool video = false}) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('displayIncomingCall', {
       "uuid": uuid,
       "handle": handle,
@@ -277,9 +272,6 @@ class FlutterCallKit {
   Future<void> startCall(String uuid, String handle, String contactIdentifier,
       {HandleType handleType = HandleType.phoneNumber,
       bool video = false}) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('startCall', {
       "uuid": uuid,
       "handle": handle,
@@ -290,17 +282,11 @@ class FlutterCallKit {
   }
 
   Future<void> reportConnectingOutgoingCallWithUUID(String uuid) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>(
         'reportConnectingOutgoingCallWithUUID', uuid);
   }
 
   Future<void> reportConnectedOutgoingCallWithUUID(String uuid) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>(
         'reportConnectedOutgoingCallWithUUID', uuid);
   }
@@ -310,9 +296,6 @@ class FlutterCallKit {
   /// The [uuid] used for [startCall] or [displayIncomingCall]
   /// [reason] for the end call one of [EndReason]
   Future<void> reportEndCallWithUUID(String uuid, EndReason reason) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('reportEndCall', {
       'uuid': uuid,
       'reason': endReasonToInt(reason),
@@ -320,9 +303,6 @@ class FlutterCallKit {
   }
 
   Future<void> rejectCall(String uuid) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('endCall', uuid);
   }
 
@@ -331,18 +311,12 @@ class FlutterCallKit {
   /// The [uuid] used for `startCall` or `displayIncomingCall`
 
   Future<void> endCall(String uuid) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('endCall', uuid);
   }
 
   /// End all calls that have been started on the device.
   ///
   Future<void> endAllCalls() async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('endAllCalls');
   }
 
@@ -351,9 +325,6 @@ class FlutterCallKit {
   /// [uuid] of the current call.
   /// set [mute] to true or false
   Future<void> setMutedCall(String uuid, bool mute) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('setMutedCall', {
       'uuid': uuid,
       'mute': mute,
@@ -364,18 +335,12 @@ class FlutterCallKit {
   /// (`true` if there're active calls, `false` otherwise).
   ///
   Future<bool> checkIfBusy() async {
-    if (!Platform.isIOS) {
-      return null;
-    }
     return await _channel.invokeMethod<void>('checkIfBusy') as bool;
   }
 
   /// Checks if the device speaker is on and returns a promise with a boolean value (`true` if speaker is on, `false` otherwise).
   ///
   Future<bool> checkSpeaker() async {
-    if (!Platform.isIOS) {
-      return null;
-    }
     return await _channel.invokeMethod<void>('checkSpeaker') as bool;
   }
 
@@ -388,9 +353,6 @@ class FlutterCallKit {
   ///
   Future<void> updateDisplay(String uuid, String handle, String displayName,
       {HandleType handleType = HandleType.phoneNumber}) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('updateDisplay', {
       "uuid": uuid,
       "handle": handle,
@@ -405,9 +367,6 @@ class FlutterCallKit {
   /// set [hold] to true or false
 
   Future<void> setOnHold(String uuid, bool hold) async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('setMutedCall', {
       'uuid': uuid,
       'hold': hold,
@@ -415,9 +374,6 @@ class FlutterCallKit {
   }
 
   Future<void> setReachable() async {
-    if (!Platform.isIOS) {
-      return;
-    }
     await _channel.invokeMethod<void>('setReachable');
   }
 
